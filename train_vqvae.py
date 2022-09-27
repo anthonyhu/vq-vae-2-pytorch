@@ -98,7 +98,7 @@ def main(args):
     dataset = datasets.ImageFolder(args.path, transform=transform)
     sampler = dist.data_sampler(dataset, shuffle=True, distributed=args.distributed)
     loader = DataLoader(
-        dataset, batch_size=128 // args.n_gpu, sampler=sampler, num_workers=2
+        dataset, batch_size=args.batch_size // args.n_gpu, sampler=sampler, num_workers=2
     )
 
     model = VQVAE().to(device)
@@ -131,6 +131,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--n_gpu", type=int, default=1)
+    parser.add_argument("--batch_size", type=int, default=128)
 
     port = (
         2 ** 15
