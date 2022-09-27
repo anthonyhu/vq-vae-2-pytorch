@@ -99,6 +99,17 @@ class Encoder(nn.Module):
     def __init__(self, in_channel, channel, n_res_block, n_res_channel, stride):
         super().__init__()
 
+        if stride == 8:
+            blocks = [
+                nn.Conv2d(in_channel, channel // 2, 4, stride=2, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(channel // 2, channel, 4, stride=2, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(channel, channel, 4, stride=2, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(channel, channel, 3, padding=1),
+            ]
+
         if stride == 4:
             blocks = [
                 nn.Conv2d(in_channel, channel // 2, 4, stride=2, padding=1),
@@ -139,6 +150,19 @@ class Decoder(nn.Module):
 
         blocks.append(nn.ReLU(inplace=True))
 
+        if stride == 8:
+            blocks.extend(
+                [
+                    nn.ConvTranspose2d(channel, channel // 2, 4, stride=2, padding=1),
+                    nn.ReLU(inplace=True),
+                    nn.ConvTranspose2d(channel // 2, channel // 2, 4, stride=2, padding=1),
+                    nn.ReLU(inplace=True),
+                    nn.ConvTranspose2d(
+                        channel // 2, out_channel, 4, stride=2, padding=1
+                    ),
+                ]
+            )
+
         if stride == 4:
             blocks.extend(
                 [
@@ -174,7 +198,7 @@ class VQVAE(nn.Module):
     ):
         super().__init__()
 
-        self.enc_b = Encoder(in_channel, channel, n_res_block, n_res_channel, stride=4)
+        self.enc_b = Encoder(in_channel, channel, n_res_block, n_res_channel, stride=8)
         self.enc_t = Encoder(channel, channel, n_res_block, n_res_channel, stride=2)
         self.quantize_conv_t = nn.Conv2d(channel, embed_dim, 1)
         self.quantize_t = Quantize(embed_dim, n_embed)
@@ -192,7 +216,7 @@ class VQVAE(nn.Module):
             channel,
             n_res_block,
             n_res_channel,
-            stride=4,
+            stride=8,
         )
 
     def forward(self, input):
