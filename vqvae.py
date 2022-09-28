@@ -236,3 +236,12 @@ class VQVAE(nn.Module):
         dec = self.decode(quant_t, quant_b)
 
         return dec
+
+    def forward_features(self, input):
+        quant_t, quant_b, _, _, _ = self.encode(input)
+        upsample_t = self.upsample_t(quant_t)
+        quant = torch.cat([upsample_t, quant_b], 1)
+
+        quant = quant[0].permute((1, 2, 0))
+        h, w, dim = quant.shape
+        return quant, h, w
